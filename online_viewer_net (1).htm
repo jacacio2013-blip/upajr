@@ -1,0 +1,2985 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gerenciamento de Férias - Enfermagem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .hospital-bg {
+            background: white;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .btn-hospital {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            transition: all 0.3s ease;
+        }
+        .btn-hospital:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="hospital-bg min-h-full">
+    <div id="app" class="min-h-full">
+        <!-- Tela de Login -->
+        <div id="loginScreen" class="flex items-center justify-center min-h-full px-4">
+            <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md">
+                <div class="text-center mb-8">
+                    <div class="mx-auto w-24 h-24 mb-4 flex items-center justify-center">
+                        <img src="https://upasanmartin.med.br/wp-content/uploads/2023/07/cropped-fav-irma-dulce-isac.png" alt="UPA Logo" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center" style="display: none;">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0v-3.5a2 2 0 011.732-1.964l.268-.077A2 2 0 018 15.5V21m7 0a2 2 0 002-2v-1a2 2 0 00-2-2H9a2 2 0 00-2 2v1a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Sistema de Férias</h1>
+                    <p class="text-gray-600">UPA 24h José Rodrigues</p>
+                    <p class="text-sm text-gray-500">Gerenciamento de Enfermagem</p>
+                </div>
+                
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Usuário</label>
+                        <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite seu usuário" required>
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                        <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite sua senha" required>
+                    </div>
+                    
+                    <button type="submit" class="w-full btn-hospital text-white py-3 rounded-lg font-semibold">
+                        Entrar
+                    </button>
+                </form>
+                
+                <div id="loginError" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden">
+                    Usuário ou senha incorretos
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Alteração de Senha -->
+        <div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">Alterar Senha</h2>
+                <p class="text-gray-600 mb-6">Por segurança, altere sua senha no primeiro acesso.</p>
+                
+                <form id="changePasswordForm" class="space-y-4">
+                    <div>
+                        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">Nova Senha</label>
+                        <input type="password" id="newPassword" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+                        <input type="password" id="confirmPassword" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <button type="submit" class="w-full btn-hospital text-white py-3 rounded-lg font-semibold">
+                        Alterar Senha
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sistema Principal -->
+        <div id="mainSystem" class="hidden min-h-full">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-xl font-semibold text-gray-800">Sistema de Férias - Enfermagem</h1>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">Bem-vindo, <span id="currentUser">Admin</span></span>
+                            <button id="logoutBtn" class="text-sm text-red-600 hover:text-red-800">Sair</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Navigation -->
+            <nav class="bg-white border-b">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex space-x-8">
+                        <button class="nav-btn py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium" data-tab="dashboard">Dashboard</button>
+                        <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="funcionarios">Funcionários</button>
+                        <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="ferias">Férias</button>
+                        <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="relatorios">Relatórios</button>
+                        <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="solicitacoes">Solicitações</button>
+                        <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="usuarios">Usuários</button>
+                        <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="configuracoes">Configurações</button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Dashboard -->
+                <div id="dashboard" class="tab-content">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-8">Resumo Geral</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Total de Funcionários</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalFuncionarios">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Enfermeiros</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalEnfermeiros">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Técnicos</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalTecnicos">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Biomédicos</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalBiomedicos">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Em Férias</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalEmFerias">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Férias por Turno -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Enfermeiros de Férias por Turno</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">Diarista</span>
+                                    <span class="font-semibold text-blue-600" id="enfDiarista">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">Plantonista Diurno</span>
+                                    <span class="font-semibold text-blue-600" id="enfDiurno">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">Plantonista Noturno</span>
+                                    <span class="font-semibold text-blue-600" id="enfNoturno">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Técnicos de Férias por Turno</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">Diarista</span>
+                                    <span class="font-semibold text-purple-600" id="tecDiarista">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">Plantonista Diurno</span>
+                                    <span class="font-semibold text-purple-600" id="tecDiurno">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-gray-700">Plantonista Noturno</span>
+                                    <span class="font-semibold text-purple-600" id="tecNoturno">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Biomédicos de Férias -->
+                    <div class="bg-white rounded-xl card-shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Biomédicos de Férias por Turno</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700">Diarista</span>
+                                <span class="font-semibold text-orange-600" id="bioDiarista">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700">Plantonista Diurno</span>
+                                <span class="font-semibold text-orange-600" id="bioDiurno">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700">Plantonista Noturno</span>
+                                <span class="font-semibold text-orange-600" id="bioNoturno">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Funcionários -->
+                <div id="funcionarios" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-bold text-gray-800">Funcionários</h2>
+                        <button id="novoFuncionarioBtn" class="btn-hospital text-white px-6 py-3 rounded-lg font-semibold flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Novo Funcionário
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl card-shadow p-6">
+                        <div class="mb-6">
+                            <label for="searchFuncionario" class="block text-sm font-medium text-gray-700 mb-2">Pesquisar Funcionário</label>
+                            <input type="text" id="searchFuncionario" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o nome do funcionário">
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turno</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Férias</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funcionariosTable" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-3 text-sm font-medium text-gray-700">
+                                            Total de funcionários: <span id="totalFuncTabela">0</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Férias -->
+                <div id="ferias" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-bold text-gray-800">Gerenciar Férias</h2>
+                        <button id="novaFeriasBtn" class="btn-hospital text-white px-6 py-3 rounded-lg font-semibold flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Nova Solicitação
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl card-shadow p-6">
+                        <div class="mb-6">
+                            <label for="searchFerias" class="block text-sm font-medium text-gray-700 mb-2">Pesquisar Funcionário</label>
+                            <input type="text" id="searchFerias" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o nome do funcionário">
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funcionário</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dias</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feriasTable" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-3 text-sm font-medium text-gray-700">
+                                            Total de solicitações: <span id="totalFeriasTabela">0</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Solicitações -->
+                <div id="solicitacoes" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-8">Gerar Solicitação de Férias</h2>
+                    
+                    <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                            <div>
+                                <label for="solicitacaoAno" class="block text-sm font-medium text-gray-700 mb-2">Selecionar Ano</label>
+                                <select id="solicitacaoAno" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Selecione o ano</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2028">2028</option>
+                                    <option value="2029">2029</option>
+                                    <option value="2030">2030</option>
+                                    <option value="custom">Digitar ano manualmente</option>
+                                </select>
+                            </div>
+                            
+                            <div id="customYearDiv" class="hidden">
+                                <label for="customYear" class="block text-sm font-medium text-gray-700 mb-2">Digite o Ano</label>
+                                <input type="number" id="customYear" min="2020" max="2050" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 2031">
+                            </div>
+                            
+                            <div>
+                                <label for="funcionariosPorPagina" class="block text-sm font-medium text-gray-700 mb-2">Funcionários por Página</label>
+                                <select id="funcionariosPorPagina" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="15">15 funcionários</option>
+                                    <option value="20">20 funcionários</option>
+                                    <option value="25">25 funcionários</option>
+                                    <option value="30" selected>30 funcionários</option>
+                                    <option value="40">40 funcionários</option>
+                                    <option value="50">50 funcionários</option>
+                                    <option value="todos">Todos em uma página</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-end">
+                                <button id="gerarSolicitacaoBtn" class="w-full btn-hospital text-white py-3 rounded-lg font-semibold">
+                                    Gerar Solicitação
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="flex items-end">
+                                <button id="imprimirSolicitacaoBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-semibold" disabled>
+                                    Imprimir
+                                </button>
+                            </div>
+                            <div class="flex items-end">
+                                <button id="salvarSolicitacaoPdfBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold" disabled>
+                                    Salvar PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="solicitacaoContent" class="hidden">
+                        <div id="solicitacaoData"></div>
+                    </div>
+                </div>
+
+                <!-- Relatórios -->
+                <div id="relatorios" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-8">Relatórios</h2>
+                    
+                    <!-- Resumo por Cargo -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumo por Cargo</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Total de Enfermeiros</span>
+                                    <span class="text-xl font-bold text-green-600" id="relatorioEnfermeiros">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Total de Técnicos</span>
+                                    <span class="text-xl font-bold text-purple-600" id="relatorioTecnicos">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Total de Biomédicos</span>
+                                    <span class="text-xl font-bold text-orange-600" id="relatorioBiomedicos">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Total Geral</span>
+                                    <span class="text-xl font-bold text-blue-600" id="relatorioTotal">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Funcionários em Férias Hoje</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Enfermeiros de Férias</span>
+                                    <span class="text-xl font-bold text-green-600" id="relatorioEnfFérias">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Técnicos de Férias</span>
+                                    <span class="text-xl font-bold text-purple-600" id="relatorioTecFerias">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Biomédicos de Férias</span>
+                                    <span class="text-xl font-bold text-orange-600" id="relatorioBioFerias">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                                    <span class="text-gray-700 font-medium">Total em Férias</span>
+                                    <span class="text-xl font-bold text-yellow-600" id="relatorioTotalFerias">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl card-shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Relatórios</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <!-- Relatório de Férias por Mês -->
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <h4 class="font-medium text-gray-800 mb-4">Saídas para Férias por Mês</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label for="relatorioMes" class="block text-sm font-medium text-gray-700 mb-2">Selecionar Mês</label>
+                                        <input type="month" id="relatorioMes" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                    <button id="gerarRelatorioBtn" class="w-full btn-hospital text-white py-3 rounded-lg font-semibold">
+                                        Gerar Relatório de Saídas
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Relatório de Funcionários sem Férias -->
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <h4 class="font-medium text-gray-800 mb-4">Funcionários sem Férias</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label for="relatorioAno" class="block text-sm font-medium text-gray-700 mb-2">Selecionar Ano</label>
+                                        <select id="relatorioAno" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                            <option value="2027">2027</option>
+                                            <option value="2028">2028</option>
+                                            <option value="2029">2029</option>
+                                            <option value="2030">2030</option>
+                                        </select>
+                                    </div>
+                                    <button id="gerarRelatorioSemFeriasBtn" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-semibold">
+                                        Gerar Relatório sem Férias
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="relatorioContent" class="hidden">
+                            <div class="flex justify-between items-center mb-4 no-print">
+                                <h4 class="text-lg font-semibold text-gray-800">Relatório de Férias</h4>
+                                <div class="space-x-2">
+                                    <button id="imprimirBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">Imprimir</button>
+                                    <button id="salvarPdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Salvar PDF</button>
+                                </div>
+                            </div>
+                            <div id="relatorioData"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usuários -->
+                <div id="usuarios" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-bold text-gray-800">Usuários do Sistema</h2>
+                        <button id="novoUsuarioBtn" class="btn-hospital text-white px-6 py-3 rounded-lg font-semibold flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                            Novo Usuário
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl card-shadow p-6">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acesso</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usuariosTable" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configurações -->
+                <div id="configuracoes" class="tab-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-8">Configurações do Sistema</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Configurações da Unidade -->
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-6">Informações da Unidade</h3>
+                            
+                            <form id="configForm" class="space-y-4">
+                                <div>
+                                    <label for="nomeUnidade" class="block text-sm font-medium text-gray-700 mb-2">Nome da Unidade</label>
+                                    <input type="text" id="nomeUnidade" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: UPA 24h José Rodrigues">
+                                </div>
+                                
+                                <div>
+                                    <label for="logoUrl" class="block text-sm font-medium text-gray-700 mb-2">URL da Logo</label>
+                                    <input type="url" id="logoUrl" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://exemplo.com/logo.png">
+                                    <p class="text-xs text-gray-500 mt-1">Deixe em branco para usar o ícone padrão</p>
+                                </div>
+                                
+                                <div>
+                                    <label for="descricaoUnidade" class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                                    <input type="text" id="descricaoUnidade" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Gerenciamento de Enfermagem">
+                                </div>
+                                
+                                <button type="submit" class="w-full btn-hospital text-white py-3 rounded-lg font-semibold">
+                                    Salvar Configurações
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Backup e Dados -->
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-6">Gerenciar Dados</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="p-4 bg-blue-50 rounded-lg">
+                                    <h4 class="font-medium text-blue-800 mb-2">Backup dos Dados</h4>
+                                    <p class="text-sm text-blue-600 mb-3">Faça backup de todos os dados do sistema</p>
+                                    <button id="backupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                        Fazer Backup
+                                    </button>
+                                </div>
+                                
+                                <div class="p-4 bg-green-50 rounded-lg">
+                                    <h4 class="font-medium text-green-800 mb-2">Restaurar Dados</h4>
+                                    <p class="text-sm text-green-600 mb-3">Restaurar dados de um arquivo de backup</p>
+                                    <input type="file" id="restoreFile" accept=".json" class="hidden">
+                                    <button id="restoreBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                        Restaurar Backup
+                                    </button>
+                                </div>
+                                
+                                <div class="p-4 bg-red-50 rounded-lg">
+                                    <h4 class="font-medium text-red-800 mb-2">Limpar Dados</h4>
+                                    <p class="text-sm text-red-600 mb-3">Remove todos os dados (exceto usuários)</p>
+                                    <button id="clearDataBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                                        Limpar Dados
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal Novo Funcionário -->
+        <div id="funcionarioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 max-h-full overflow-y-auto">
+                <h2 class="text-xl font-bold text-gray-800 mb-6" id="funcionarioModalTitle">Novo Funcionário</h2>
+                
+                <form id="funcionarioForm" class="space-y-4">
+                    <input type="hidden" id="funcionarioId">
+                    
+                    <div>
+                        <label for="funcionarioNome" class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+                        <input type="text" id="funcionarioNome" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div>
+                        <label for="funcionarioCargo" class="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
+                        <select id="funcionarioCargo" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                            <option value="">Selecione o cargo</option>
+                            <option value="Enfermeiro(a)">Enfermeiro(a)</option>
+                            <option value="Técnico de Enfermagem">Técnico de Enfermagem</option>
+                            <option value="Biomédico(a)">Biomédico(a)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="funcionarioTurno" class="block text-sm font-medium text-gray-700 mb-2">Turno</label>
+                        <select id="funcionarioTurno" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                            <option value="">Selecione o turno</option>
+                            <option value="Diarista">Diarista</option>
+                            <option value="Plantonista Diurno">Plantonista Diurno</option>
+                            <option value="Plantonista Noturno">Plantonista Noturno</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="funcionarioContato" class="block text-sm font-medium text-gray-700 mb-2">Contato (Opcional)</label>
+                        <input type="text" id="funcionarioContato" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Telefone ou email">
+                    </div>
+                    
+                    <div class="flex space-x-4 pt-4">
+                        <button type="button" id="cancelarFuncionario" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 btn-hospital text-white py-3 rounded-lg font-semibold">
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Nova Férias -->
+        <div id="feriasModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 max-h-full overflow-y-auto">
+                <h2 class="text-xl font-bold text-gray-800 mb-6" id="feriasModalTitle">Nova Solicitação de Férias</h2>
+                
+                <form id="feriasForm" class="space-y-4">
+                    <input type="hidden" id="feriasId">
+                    
+                    <div>
+                        <label for="feriasFunc" class="block text-sm font-medium text-gray-700 mb-2">Funcionário</label>
+                        <input type="text" id="feriasFuncSearch" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o nome do funcionário" required>
+                        <input type="hidden" id="feriasFunc" required>
+                        <div id="funcionariosList" class="hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto"></div>
+                    </div>
+                    
+                    <div>
+                        <label for="feriasSolicitacao" class="block text-sm font-medium text-gray-700 mb-2">Data da Solicitação</label>
+                        <input type="date" id="feriasSolicitacao" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div>
+                        <label for="feriasInicio" class="block text-sm font-medium text-gray-700 mb-2">Data de Início das Férias</label>
+                        <input type="date" id="feriasInicio" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div>
+                        <label for="feriasDias" class="block text-sm font-medium text-gray-700 mb-2">Período</label>
+                        <select id="feriasDias" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                            <option value="">Selecione o período</option>
+                            <option value="15">15 dias</option>
+                            <option value="30">30 dias</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="feriasFim" class="block text-sm font-medium text-gray-700 mb-2">Data de Término</label>
+                        <input type="date" id="feriasFim" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100" readonly>
+                    </div>
+                    
+                    <div>
+                        <label for="feriasRetorno" class="block text-sm font-medium text-gray-700 mb-2">Data de Retorno</label>
+                        <input type="date" id="feriasRetorno" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100" readonly>
+                    </div>
+                    
+                    <div class="flex space-x-4 pt-4">
+                        <button type="button" id="cancelarFerias" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 btn-hospital text-white py-3 rounded-lg font-semibold">
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Novo Usuário -->
+        <div id="usuarioModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4">
+                <h2 class="text-xl font-bold text-gray-800 mb-6" id="usuarioModalTitle">Novo Usuário</h2>
+                
+                <form id="usuarioForm" class="space-y-4">
+                    <input type="hidden" id="usuarioId">
+                    
+                    <div>
+                        <label for="usuarioNome" class="block text-sm font-medium text-gray-700 mb-2">Nome de Usuário</label>
+                        <input type="text" id="usuarioNome" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div>
+                        <label for="usuarioSenha" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                        <input type="password" id="usuarioSenha" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div class="flex space-x-4 pt-4">
+                        <button type="button" id="cancelarUsuario" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 btn-hospital text-white py-3 rounded-lg font-semibold">
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal de Confirmação -->
+        <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Confirmar Ação</h2>
+                <p id="confirmMessage" class="text-gray-600 mb-6"></p>
+                
+                <div class="flex space-x-4">
+                    <button id="confirmCancel" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold">
+                        Cancelar
+                    </button>
+                    <button id="confirmOk" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Violação de Regra -->
+        <div id="ruleViolationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Violação de Regra</h2>
+                </div>
+                <div id="ruleViolationMessage" class="text-gray-600 mb-6"></div>
+                <p class="text-sm text-gray-500 mb-6">Deseja continuar mesmo assim?</p>
+                
+                <div class="flex space-x-4">
+                    <button id="ruleViolationCancel" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-semibold">
+                        Cancelar
+                    </button>
+                    <button id="ruleViolationContinue" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg font-semibold">
+                        Continuar Assim Mesmo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast de Notificação -->
+        <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span id="toastMessage">Operação realizada com sucesso!</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados do sistema
+        let funcionarios = [];
+        let ferias = [];
+        let usuarios = [];
+        let configuracoes = {};
+        let currentUser = null;
+
+        // Feriados nacionais, estaduais (AM) e municipais (Manaus)
+        const feriados = [
+            // 2020 - Nacionais
+            '2020-01-01', // Confraternização Universal
+            '2020-04-21', // Tiradentes
+            '2020-05-01', // Dia do Trabalhador
+            '2020-09-07', // Independência do Brasil
+            '2020-10-12', // Nossa Senhora Aparecida
+            '2020-11-02', // Finados
+            '2020-11-15', // Proclamação da República
+            '2020-12-25', // Natal
+            
+            // 2021 - Nacionais
+            '2021-01-01', // Confraternização Universal
+            '2021-04-21', // Tiradentes
+            '2021-05-01', // Dia do Trabalhador
+            '2021-09-07', // Independência do Brasil
+            '2021-10-12', // Nossa Senhora Aparecida
+            '2021-11-02', // Finados
+            '2021-11-15', // Proclamação da República
+            '2021-12-25', // Natal
+            
+            // 2022 - Nacionais
+            '2022-01-01', // Confraternização Universal
+            '2022-04-21', // Tiradentes
+            '2022-05-01', // Dia do Trabalhador
+            '2022-09-07', // Independência do Brasil
+            '2022-10-12', // Nossa Senhora Aparecida
+            '2022-11-02', // Finados
+            '2022-11-15', // Proclamação da República
+            '2022-12-25', // Natal
+            
+            // 2023 - Nacionais
+            '2023-01-01', // Confraternização Universal
+            '2023-04-21', // Tiradentes
+            '2023-05-01', // Dia do Trabalhador
+            '2023-09-07', // Independência do Brasil
+            '2023-10-12', // Nossa Senhora Aparecida
+            '2023-11-02', // Finados
+            '2023-11-15', // Proclamação da República
+            '2023-12-25', // Natal
+            
+            // 2024 - Nacionais
+            '2024-01-01', // Confraternização Universal
+            '2024-02-12', // Carnaval
+            '2024-02-13', // Carnaval
+            '2024-03-29', // Sexta-feira Santa
+            '2024-04-21', // Tiradentes
+            '2024-05-01', // Dia do Trabalhador
+            '2024-09-07', // Independência do Brasil
+            '2024-10-12', // Nossa Senhora Aparecida
+            '2024-11-02', // Finados
+            '2024-11-15', // Proclamação da República
+            '2024-12-25', // Natal
+            // 2024 - Amazonas
+            '2024-09-05', // Elevação do Amazonas à categoria de província
+            '2024-11-20', // Consciência Negra (AM)
+            // 2024 - Manaus
+            '2024-10-24', // Dia de Nossa Senhora dos Remédios (Manaus)
+            
+            // 2025 - Nacionais
+            '2025-01-01', // Confraternização Universal
+            '2025-03-03', // Carnaval
+            '2025-03-04', // Carnaval
+            '2025-04-18', // Sexta-feira Santa
+            '2025-04-21', // Tiradentes
+            '2025-05-01', // Dia do Trabalhador
+            '2025-09-07', // Independência do Brasil
+            '2025-10-12', // Nossa Senhora Aparecida
+            '2025-11-02', // Finados
+            '2025-11-15', // Proclamação da República
+            '2025-12-25', // Natal
+            // 2025 - Amazonas
+            '2025-09-05', // Elevação do Amazonas à categoria de província
+            '2025-11-20', // Consciência Negra (AM)
+            // 2025 - Manaus
+            '2025-10-24', // Dia de Nossa Senhora dos Remédios (Manaus)
+            
+            // 2026 - Nacionais
+            '2026-01-01', // Confraternização Universal
+            '2026-04-21', // Tiradentes
+            '2026-05-01', // Dia do Trabalhador
+            '2026-09-07', // Independência do Brasil
+            '2026-10-12', // Nossa Senhora Aparecida
+            '2026-11-02', // Finados
+            '2026-11-15', // Proclamação da República
+            '2026-12-25', // Natal
+            
+            // 2027 - Nacionais
+            '2027-01-01', // Confraternização Universal
+            '2027-04-21', // Tiradentes
+            '2027-05-01', // Dia do Trabalhador
+            '2027-09-07', // Independência do Brasil
+            '2027-10-12', // Nossa Senhora Aparecida
+            '2027-11-02', // Finados
+            '2027-11-15', // Proclamação da República
+            '2027-12-25', // Natal
+            
+            // 2028 - Nacionais
+            '2028-01-01', // Confraternização Universal
+            '2028-04-21', // Tiradentes
+            '2028-05-01', // Dia do Trabalhador
+            '2028-09-07', // Independência do Brasil
+            '2028-10-12', // Nossa Senhora Aparecida
+            '2028-11-02', // Finados
+            '2028-11-15', // Proclamação da República
+            '2028-12-25', // Natal
+            
+            // 2029 - Nacionais
+            '2029-01-01', // Confraternização Universal
+            '2029-04-21', // Tiradentes
+            '2029-05-01', // Dia do Trabalhador
+            '2029-09-07', // Independência do Brasil
+            '2029-10-12', // Nossa Senhora Aparecida
+            '2029-11-02', // Finados
+            '2029-11-15', // Proclamação da República
+            '2029-12-25', // Natal
+            
+            // 2030 - Nacionais
+            '2030-01-01', // Confraternização Universal
+            '2030-04-21', // Tiradentes
+            '2030-05-01', // Dia do Trabalhador
+            '2030-09-07', // Independência do Brasil
+            '2030-10-12', // Nossa Senhora Aparecida
+            '2030-11-02', // Finados
+            '2030-11-15', // Proclamação da República
+            '2030-12-25' // Natal
+        ];
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+        });
+
+        function initializeSystem() {
+            // Inicializar dados padrão
+            initializeDefaultData();
+            
+            console.log('Sistema inicializado com sucesso');
+
+            // Event listeners para login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            // Event listeners para navegação
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+            });
+
+            // Event listeners para modais
+            document.getElementById('novoFuncionarioBtn').addEventListener('click', () => openFuncionarioModal());
+            document.getElementById('cancelarFuncionario').addEventListener('click', () => closeFuncionarioModal());
+            document.getElementById('funcionarioForm').addEventListener('submit', handleSaveFuncionario);
+
+            document.getElementById('novaFeriasBtn').addEventListener('click', () => openFeriasModal());
+            document.getElementById('cancelarFerias').addEventListener('click', () => closeFeriasModal());
+            document.getElementById('feriasForm').addEventListener('submit', handleSaveFerias);
+
+            document.getElementById('novoUsuarioBtn').addEventListener('click', () => openUsuarioModal());
+            document.getElementById('cancelarUsuario').addEventListener('click', () => closeUsuarioModal());
+            document.getElementById('usuarioForm').addEventListener('submit', handleSaveUsuario);
+
+            // Event listeners para pesquisa
+            document.getElementById('searchFuncionario').addEventListener('input', filterFuncionarios);
+            document.getElementById('searchFerias').addEventListener('input', filterFerias);
+
+            // Event listeners para férias
+            document.getElementById('feriasInicio').addEventListener('change', calculateFeriasEnd);
+            document.getElementById('feriasDias').addEventListener('change', calculateFeriasEnd);
+            document.getElementById('feriasFuncSearch').addEventListener('input', searchFuncionarios);
+            document.getElementById('feriasFuncSearch').addEventListener('focus', showFuncionariosList);
+
+            // Event listeners para relatórios
+            document.getElementById('gerarRelatorioBtn').addEventListener('click', generateReport);
+            document.getElementById('gerarRelatorioSemFeriasBtn').addEventListener('click', generateReportSemFerias);
+            document.getElementById('imprimirBtn').addEventListener('click', printReport);
+            document.getElementById('salvarPdfBtn').addEventListener('click', savePDF);
+
+            // Event listeners para solicitações
+            document.getElementById('gerarSolicitacaoBtn').addEventListener('click', generateSolicitacao);
+            document.getElementById('imprimirSolicitacaoBtn').addEventListener('click', printSolicitacao);
+            document.getElementById('salvarSolicitacaoPdfBtn').addEventListener('click', saveSolicitacaoPDF);
+            document.getElementById('solicitacaoAno').addEventListener('change', toggleCustomYear);
+
+            // Event listeners para configurações
+            document.getElementById('configForm').addEventListener('submit', handleSaveConfig);
+            document.getElementById('backupBtn').addEventListener('click', makeBackup);
+            document.getElementById('restoreBtn').addEventListener('click', () => document.getElementById('restoreFile').click());
+            document.getElementById('restoreFile').addEventListener('change', restoreBackup);
+            document.getElementById('clearDataBtn').addEventListener('click', clearData);
+
+            // Event listeners para confirmação
+            document.getElementById('confirmCancel').addEventListener('click', closeConfirmModal);
+            document.getElementById('ruleViolationCancel').addEventListener('click', closeRuleViolationModal);
+
+            // Definir data atual
+            document.getElementById('feriasSolicitacao').valueAsDate = new Date();
+            document.getElementById('relatorioMes').value = new Date().toISOString().slice(0, 7);
+            document.getElementById('relatorioAno').value = new Date().getFullYear();
+
+            updateDashboard();
+            loadFuncionarios();
+            loadFerias();
+            loadUsuarios();
+            loadConfiguracoes();
+            updateSystemInfo();
+        }
+
+        // Função para inicializar dados padrão
+        function initializeDefaultData() {
+            // Tentar carregar dados salvos primeiro
+            const dataLoaded = loadData();
+            
+            // Criar usuário admin padrão se não existir
+            if (usuarios.length === 0) {
+                usuarios.push({
+                    id: 1,
+                    username: 'admin',
+                    password: '32m13r9a',
+                    firstLogin: true,
+                    lastAccess: null
+                });
+                console.log('Usuário admin criado');
+                saveData(); // Salvar após criar admin
+            }
+
+            // Configurações padrão
+            if (!configuracoes.nomeUnidade) {
+                configuracoes = {
+                    nomeUnidade: 'UPA 24h José Rodrigues',
+                    logoUrl: 'https://upasanmartin.med.br/wp-content/uploads/2023/07/cropped-fav-irma-dulce-isac.png',
+                    descricaoUnidade: 'Gerenciamento de Enfermagem'
+                };
+                console.log('Configurações padrão criadas');
+                saveData(); // Salvar após criar configurações
+            }
+            
+            if (dataLoaded) {
+                console.log('Dados carregados com sucesso do armazenamento local');
+            }
+        }
+
+        // Sistema de Login
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const user = usuarios.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                user.lastAccess = new Date().toISOString();
+                
+                saveData(); // Salvar dados após login
+                document.getElementById('currentUser').textContent = user.username;
+                document.getElementById('loginScreen').classList.add('hidden');
+                
+                if (user.firstLogin) {
+                    document.getElementById('changePasswordModal').classList.remove('hidden');
+                } else {
+                    document.getElementById('mainSystem').classList.remove('hidden');
+                }
+                
+                document.getElementById('loginError').classList.add('hidden');
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleChangePassword(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showToast('As senhas não coincidem!', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showToast('A senha deve ter pelo menos 6 caracteres!', 'error');
+                return;
+            }
+
+            currentUser.password = newPassword;
+            currentUser.firstLogin = false;
+
+            saveData(); // Salvar dados após alterar senha
+            document.getElementById('changePasswordModal').classList.add('hidden');
+            document.getElementById('mainSystem').classList.remove('hidden');
+            showToast('Senha alterada com sucesso!');
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('mainSystem').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Sistema de Navegação
+        function switchTab(tabName) {
+            // Atualizar botões de navegação
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.remove('border-transparent', 'text-gray-500');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('border-blue-500', 'text-blue-600');
+
+            // Mostrar conteúdo da aba
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(tabName).classList.remove('hidden');
+
+            // Atualizar dados se necessário
+            if (tabName === 'dashboard') updateDashboard();
+            if (tabName === 'funcionarios') loadFuncionarios();
+            if (tabName === 'ferias') loadFerias();
+            if (tabName === 'relatorios') updateRelatorios();
+            if (tabName === 'solicitacoes') loadSolicitacoes();
+            if (tabName === 'usuarios') loadUsuarios();
+            if (tabName === 'configuracoes') loadConfiguracoes();
+        }
+
+        // Solicitações de Férias
+        function loadSolicitacoes() {
+            // Definir ano atual como padrão
+            const currentYear = new Date().getFullYear();
+            document.getElementById('solicitacaoAno').value = currentYear;
+        }
+
+        function toggleCustomYear() {
+            const select = document.getElementById('solicitacaoAno');
+            const customDiv = document.getElementById('customYearDiv');
+            
+            if (select.value === 'custom') {
+                customDiv.classList.remove('hidden');
+                document.getElementById('customYear').focus();
+            } else {
+                customDiv.classList.add('hidden');
+                document.getElementById('customYear').value = '';
+            }
+        }
+
+        function generateSolicitacao() {
+            let ano = document.getElementById('solicitacaoAno').value;
+            
+            // Se selecionou "custom", pegar o valor do input
+            if (ano === 'custom') {
+                ano = document.getElementById('customYear').value;
+                if (!ano) {
+                    showToast('Digite um ano válido!', 'error');
+                    return;
+                }
+            }
+            
+            if (!ano) {
+                showToast('Selecione um ano para gerar a solicitação!', 'error');
+                return;
+            }
+            
+            // Validar se o ano está dentro do range aceitável
+            const anoNum = parseInt(ano);
+            if (anoNum < 2020 || anoNum > 2050) {
+                showToast('Por favor, digite um ano entre 2020 e 2050!', 'error');
+                return;
+            }
+
+            // Obter quantidade de funcionários por página
+            const funcPorPagina = document.getElementById('funcionariosPorPagina').value;
+            const quantidade = funcPorPagina === 'todos' ? 999999 : parseInt(funcPorPagina);
+
+            // Separar funcionários por cargo e ordenar alfabeticamente
+            const enfermeiros = funcionarios.filter(f => f.cargo === 'Enfermeiro(a)')
+                .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+            const tecnicos = funcionarios.filter(f => f.cargo === 'Técnico de Enfermagem')
+                .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+            const biomedicos = funcionarios.filter(f => f.cargo === 'Biomédico(a)')
+                .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+            // Dividir em páginas conforme seleção do usuário
+            const enfermeirosPaginas = dividirEmPaginas(enfermeiros, quantidade);
+            const tecnicosPaginas = dividirEmPaginas(tecnicos, quantidade);
+            const biomedicosPaginas = dividirEmPaginas(biomedicos, quantidade);
+
+            let solicitacaoHtml = '';
+
+            // Gerar páginas para enfermeiros
+            enfermeirosPaginas.forEach((pagina, index) => {
+                solicitacaoHtml += gerarPaginaSolicitacao('ENFERMEIROS', pagina, ano, index + 1, enfermeirosPaginas.length, quantidade);
+            });
+
+            // Gerar páginas para técnicos
+            tecnicosPaginas.forEach((pagina, index) => {
+                solicitacaoHtml += gerarPaginaSolicitacao('TÉCNICOS DE ENFERMAGEM', pagina, ano, index + 1, tecnicosPaginas.length, quantidade);
+            });
+
+            // Gerar páginas para biomédicos
+            biomedicosPaginas.forEach((pagina, index) => {
+                solicitacaoHtml += gerarPaginaSolicitacao('BIOMÉDICOS', pagina, ano, index + 1, biomedicosPaginas.length, quantidade);
+            });
+
+            document.getElementById('solicitacaoData').innerHTML = solicitacaoHtml;
+            document.getElementById('solicitacaoContent').classList.remove('hidden');
+            
+            // Habilitar botões de impressão e PDF
+            document.getElementById('imprimirSolicitacaoBtn').disabled = false;
+            document.getElementById('salvarSolicitacaoPdfBtn').disabled = false;
+            
+            showToast('Solicitação gerada com sucesso!');
+        }
+
+        function dividirEmPaginas(array, tamanho) {
+            const paginas = [];
+            for (let i = 0; i < array.length; i += tamanho) {
+                paginas.push(array.slice(i, i + tamanho));
+            }
+            return paginas.length > 0 ? paginas : [[]]; // Retorna pelo menos uma página vazia
+        }
+
+        function gerarPaginaSolicitacao(cargo, funcionarios, ano, paginaAtual, totalPaginas, funcPorPagina) {
+            // Completar com linhas vazias até a quantidade selecionada (ou mínimo de 15 para layout)
+            const funcionariosCompletos = [...funcionarios];
+            const minLinhas = Math.max(15, funcPorPagina === 999999 ? funcionarios.length : funcPorPagina);
+            
+            while (funcionariosCompletos.length < minLinhas) {
+                funcionariosCompletos.push({ nome: '', turno: '' });
+            }
+
+            return `
+                <div class="solicitacao-page" style="page-break-after: always; margin-bottom: 40px;">
+                    <div class="text-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 mb-1">SOLICITAÇÃO DE FÉRIAS - ${cargo}</h2>
+                        <h3 class="text-base font-semibold text-gray-700 mb-1">${configuracoes.nomeUnidade}</h3>
+                        <p class="text-sm text-gray-600 mb-1">ANO: ${ano}</p>
+                        ${totalPaginas > 1 ? `<p class="text-xs text-gray-500">Página ${paginaAtual} de ${totalPaginas}</p>` : ''}
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border-2 border-black text-xs">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 3%;">Nº</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 20%;">NOME DO FUNCIONÁRIO</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 8%;">TURNO</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 8%;">MÊS DESEJADO</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 10%;">CONTATO</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 9%;">DATA ANIVERSÁRIO</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 9%;">DATA SOLICITAÇÃO</th>
+                                    <th class="border-2 border-black px-1 py-2 text-center font-bold" style="width: 33%;">ASSINATURA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${funcionariosCompletos.map((func, index) => `
+                                    <tr style="height: 25px;">
+                                        <td class="border-2 border-black px-1 py-1 text-center font-medium">${func.nome ? (paginaAtual - 1) * (funcPorPagina === 999999 ? funcionarios.length : funcPorPagina) + index + 1 : ''}</td>
+                                        <td class="border-2 border-black px-1 py-1 font-medium">${func.nome}</td>
+                                        <td class="border-2 border-black px-1 py-1 text-center text-xs">${func.turno}</td>
+                                        <td class="border-2 border-black px-1 py-1"></td>
+                                        <td class="border-2 border-black px-1 py-1"></td>
+                                        <td class="border-2 border-black px-1 py-1"></td>
+                                        <td class="border-2 border-black px-1 py-1"></td>
+                                        <td class="border-2 border-black px-1 py-1 text-center"></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 text-xs text-gray-600">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="mb-1 font-bold">INSTRUÇÕES:</p>
+                                <ul class="list-disc list-inside space-y-0 text-xs">
+                                    <li>Preencher todos os campos obrigatórios</li>
+                                    <li>Indicar o mês desejado para as férias</li>
+                                    <li>Informar contato atualizado</li>
+                                    <li>Assinar no campo correspondente</li>
+                                </ul>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs">&nbsp;</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function printSolicitacao() {
+            const solicitacaoContent = document.getElementById('solicitacaoData').innerHTML;
+            
+            if (!solicitacaoContent) {
+                showToast('Gere uma solicitação primeiro!', 'error');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank', 'width=1200,height=800');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Solicitação de Férias</title>
+                    <style>
+                        @page {
+                            size: A4 landscape;
+                            margin: 10mm;
+                        }
+                        
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 0;
+                            padding: 0;
+                            line-height: 1.2;
+                            font-size: 10px;
+                        }
+                        
+                        .solicitacao-page {
+                            page-break-after: always;
+                            margin-bottom: 0;
+                            width: 100%;
+                        }
+                        
+                        .solicitacao-page:last-child {
+                            page-break-after: avoid;
+                        }
+                        
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 15px; 
+                            font-size: 9px;
+                        }
+                        
+                        th, td { 
+                            border: 2px solid #000; 
+                            padding: 3px 2px;
+                            text-align: left;
+                            vertical-align: middle;
+                        }
+                        
+                        th { 
+                            background-color: #f0f0f0; 
+                            font-weight: bold;
+                            text-align: center;
+                            font-size: 8px;
+                        }
+                        
+                        tr {
+                            height: 20px;
+                        }
+                        
+                        .text-center { text-align: center; }
+                        .font-bold { font-weight: bold; }
+                        .font-semibold { font-weight: 600; }
+                        .font-medium { font-weight: 500; }
+                        
+                        h2 { 
+                            font-size: 14px;
+                            margin: 0 0 4px 0;
+                        }
+                        
+                        h3 { 
+                            font-size: 12px;
+                            margin: 0 0 4px 0;
+                        }
+                        
+                        p { 
+                            margin: 0 0 2px 0;
+                        }
+                        
+                        .mb-1 { margin-bottom: 4px; }
+                        .mb-2 { margin-bottom: 8px; }
+                        .mb-4 { margin-bottom: 16px; }
+                        .mt-4 { margin-top: 16px; }
+                        .mt-8 { margin-top: 32px; }
+                        .mt-12 { margin-top: 48px; }
+                        
+                        .grid {
+                            display: grid;
+                        }
+                        
+                        .grid-cols-2 {
+                            grid-template-columns: 1fr 1fr;
+                        }
+                        
+                        .gap-4 {
+                            gap: 16px;
+                        }
+                        
+                        .text-right {
+                            text-align: right;
+                        }
+                        
+                        .border-t-2 {
+                            border-top: 2px solid #000;
+                        }
+                        
+                        .w-48 {
+                            width: 192px;
+                        }
+                        
+                        .ml-auto {
+                            margin-left: auto;
+                        }
+                        
+                        .list-disc {
+                            list-style-type: disc;
+                        }
+                        
+                        .list-inside {
+                            list-style-position: inside;
+                        }
+                        
+                        .space-y-0 > * + * {
+                            margin-top: 0;
+                        }
+                        
+                        .text-xs {
+                            font-size: 8px;
+                        }
+                        
+                        .text-sm {
+                            font-size: 9px;
+                        }
+                        
+                        .text-base {
+                            font-size: 10px;
+                        }
+                        
+                        .text-lg {
+                            font-size: 12px;
+                        }
+                        
+                        @media print {
+                            @page {
+                                size: A4 landscape;
+                                margin: 10mm;
+                            }
+                            
+                            body { 
+                                margin: 0; 
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .solicitacao-page {
+                                page-break-after: always;
+                                width: 100%;
+                            }
+                            
+                            .solicitacao-page:last-child {
+                                page-break-after: avoid;
+                            }
+                            
+                            table {
+                                width: 100%;
+                                font-size: 8px;
+                            }
+                            
+                            th, td {
+                                padding: 2px 1px;
+                            }
+                            
+                            tr {
+                                height: 18px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${solicitacaoContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+            }, 500);
+            
+            showToast('Abrindo janela de impressão...');
+        }
+
+        function saveSolicitacaoPDF() {
+            printSolicitacao(); // Usar a mesma função de impressão
+        }
+
+        // Relatórios
+        function updateRelatorios() {
+            const totalEnf = funcionarios.filter(f => f.cargo === 'Enfermeiro(a)').length;
+            const totalTec = funcionarios.filter(f => f.cargo === 'Técnico de Enfermagem').length;
+            const totalBio = funcionarios.filter(f => f.cargo === 'Biomédico(a)').length;
+            const totalFunc = funcionarios.length;
+            
+            const feriasAtivas = ferias.filter(f => {
+                const hoje = new Date();
+                const inicio = new Date(f.inicio);
+                const fim = new Date(f.fim);
+                return hoje >= inicio && hoje <= fim;
+            });
+            
+            const enfFérias = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Enfermeiro(a)';
+            }).length;
+            
+            const tecFerias = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Técnico de Enfermagem';
+            }).length;
+            
+            const bioFerias = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Biomédico(a)';
+            }).length;
+            
+            document.getElementById('relatorioEnfermeiros').textContent = totalEnf;
+            document.getElementById('relatorioTecnicos').textContent = totalTec;
+            document.getElementById('relatorioBiomedicos').textContent = totalBio;
+            document.getElementById('relatorioTotal').textContent = totalFunc;
+            document.getElementById('relatorioEnfFérias').textContent = enfFérias;
+            document.getElementById('relatorioTecFerias').textContent = tecFerias;
+            document.getElementById('relatorioBioFerias').textContent = bioFerias;
+            document.getElementById('relatorioTotalFerias').textContent = feriasAtivas.length;
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            const totalFunc = funcionarios.length;
+            const totalEnf = funcionarios.filter(f => f.cargo === 'Enfermeiro(a)').length;
+            const totalTec = funcionarios.filter(f => f.cargo === 'Técnico de Enfermagem').length;
+            const totalBio = funcionarios.filter(f => f.cargo === 'Biomédico(a)').length;
+            
+            const feriasAtivas = ferias.filter(f => {
+                const hoje = new Date();
+                const inicio = new Date(f.inicio);
+                const fim = new Date(f.fim);
+                return hoje >= inicio && hoje <= fim;
+            });
+            
+            document.getElementById('totalFuncionarios').textContent = totalFunc;
+            document.getElementById('totalEnfermeiros').textContent = totalEnf;
+            document.getElementById('totalTecnicos').textContent = totalTec;
+            document.getElementById('totalBiomedicos').textContent = totalBio;
+            document.getElementById('totalEmFerias').textContent = feriasAtivas.length;
+
+            // Férias por turno
+            const enfDiarista = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Enfermeiro(a)' && func.turno === 'Diarista';
+            }).length;
+
+            const enfDiurno = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Enfermeiro(a)' && func.turno === 'Plantonista Diurno';
+            }).length;
+
+            const enfNoturno = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Enfermeiro(a)' && func.turno === 'Plantonista Noturno';
+            }).length;
+
+            const tecDiarista = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Técnico de Enfermagem' && func.turno === 'Diarista';
+            }).length;
+
+            const tecDiurno = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Técnico de Enfermagem' && func.turno === 'Plantonista Diurno';
+            }).length;
+
+            const tecNoturno = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Técnico de Enfermagem' && func.turno === 'Plantonista Noturno';
+            }).length;
+
+            const bioDiarista = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Biomédico(a)' && func.turno === 'Diarista';
+            }).length;
+
+            const bioDiurno = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Biomédico(a)' && func.turno === 'Plantonista Diurno';
+            }).length;
+
+            const bioNoturno = feriasAtivas.filter(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return func && func.cargo === 'Biomédico(a)' && func.turno === 'Plantonista Noturno';
+            }).length;
+
+            document.getElementById('enfDiarista').textContent = enfDiarista;
+            document.getElementById('enfDiurno').textContent = enfDiurno;
+            document.getElementById('enfNoturno').textContent = enfNoturno;
+            document.getElementById('tecDiarista').textContent = tecDiarista;
+            document.getElementById('tecDiurno').textContent = tecDiurno;
+            document.getElementById('tecNoturno').textContent = tecNoturno;
+            document.getElementById('bioDiarista').textContent = bioDiarista;
+            document.getElementById('bioDiurno').textContent = bioDiurno;
+            document.getElementById('bioNoturno').textContent = bioNoturno;
+        }
+
+        // Gerenciamento de Funcionários
+        function openFuncionarioModal(funcionario = null) {
+            if (funcionario) {
+                document.getElementById('funcionarioModalTitle').textContent = 'Editar Funcionário';
+                document.getElementById('funcionarioId').value = funcionario.id;
+                document.getElementById('funcionarioNome').value = funcionario.nome;
+                document.getElementById('funcionarioCargo').value = funcionario.cargo;
+                document.getElementById('funcionarioTurno').value = funcionario.turno;
+                document.getElementById('funcionarioContato').value = funcionario.contato || '';
+            } else {
+                document.getElementById('funcionarioModalTitle').textContent = 'Novo Funcionário';
+                document.getElementById('funcionarioForm').reset();
+                document.getElementById('funcionarioId').value = '';
+            }
+            document.getElementById('funcionarioModal').classList.remove('hidden');
+        }
+
+        function closeFuncionarioModal() {
+            document.getElementById('funcionarioModal').classList.add('hidden');
+        }
+
+        function handleSaveFuncionario(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('funcionarioId').value;
+            const nome = document.getElementById('funcionarioNome').value;
+            const cargo = document.getElementById('funcionarioCargo').value;
+            const turno = document.getElementById('funcionarioTurno').value;
+            const contato = document.getElementById('funcionarioContato').value;
+
+            if (id) {
+                // Editar funcionário existente
+                const index = funcionarios.findIndex(f => f.id == id);
+                funcionarios[index] = { ...funcionarios[index], nome, cargo, turno, contato };
+                showToast('Funcionário atualizado com sucesso!');
+            } else {
+                // Novo funcionário
+                const newId = funcionarios.length > 0 ? Math.max(...funcionarios.map(f => f.id)) + 1 : 1;
+                const newFuncionario = {
+                    id: newId,
+                    nome,
+                    cargo,
+                    turno,
+                    contato,
+                    feriasAno: new Date().getFullYear(),
+                    diasUsados: 0,
+                    solicitouFerias: false
+                };
+                
+                funcionarios.push(newFuncionario);
+                showToast('Funcionário salvo com sucesso!');
+            }
+
+            saveData(); // Salvar dados após modificação
+            loadFuncionarios();
+            updateFeriasSelect();
+            closeFuncionarioModal();
+        }
+
+        function loadFuncionarios() {
+            const tbody = document.getElementById('funcionariosTable');
+            tbody.innerHTML = '';
+
+            // Ordenar funcionários por nome em ordem alfabética
+            const funcionariosOrdenados = [...funcionarios].sort((a, b) => 
+                a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })
+            );
+
+            funcionariosOrdenados.forEach(funcionario => {
+                const feriasStatus = getFeriasStatus(funcionario);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${funcionario.nome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${funcionario.cargo}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${funcionario.turno}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${feriasStatus.class}">
+                            ${feriasStatus.text}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="openFuncionarioModal(${JSON.stringify(funcionario).replace(/"/g, '&quot;')})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                        <button onclick="deleteFuncionario(${funcionario.id})" class="text-red-600 hover:text-red-900">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Atualizar total na tabela
+            document.getElementById('totalFuncTabela').textContent = funcionarios.length;
+            updateFeriasSelect();
+        }
+
+        function getFeriasStatus(funcionario) {
+            const anoAtual = new Date().getFullYear();
+            const feriasFunc = ferias.filter(f => f.funcionarioId === funcionario.id && new Date(f.inicio).getFullYear() === anoAtual);
+            
+            const diasUsados = feriasFunc.reduce((total, f) => total + f.dias, 0);
+            const temSolicitacao = feriasFunc.length > 0;
+
+            if (diasUsados >= 30) {
+                return { text: 'Férias Completas', class: 'bg-green-100 text-green-800' };
+            } else if (temSolicitacao) {
+                return { text: 'Férias Parciais', class: 'bg-yellow-100 text-yellow-800' };
+            } else {
+                return { text: 'Falta Solicitar', class: 'bg-red-100 text-red-800' };
+            }
+        }
+
+        function filterFuncionarios() {
+            const search = document.getElementById('searchFuncionario').value.toLowerCase();
+            const rows = document.querySelectorAll('#funcionariosTable tr');
+            
+            rows.forEach(row => {
+                const nome = row.cells[0].textContent.toLowerCase();
+                row.style.display = nome.includes(search) ? '' : 'none';
+            });
+        }
+
+        function deleteFuncionario(id) {
+            showConfirm('Tem certeza que deseja excluir este funcionário?', () => {
+                funcionarios = funcionarios.filter(f => f.id !== id);
+                
+                // Remover férias relacionadas
+                ferias = ferias.filter(f => f.funcionarioId !== id);
+                
+                saveData(); // Salvar dados após exclusão
+                loadFuncionarios();
+                showToast('Funcionário excluído com sucesso!');
+            });
+        }
+
+        // Gerenciamento de Férias
+        function openFeriasModal(feriaItem = null) {
+            updateFeriasSelect();
+            
+            if (feriaItem) {
+                document.getElementById('feriasModalTitle').textContent = 'Editar Férias';
+                document.getElementById('feriasId').value = feriaItem.id;
+                document.getElementById('feriasFunc').value = feriaItem.funcionarioId;
+                document.getElementById('feriasFuncSearch').value = feriaItem.funcionarioNome;
+                document.getElementById('feriasSolicitacao').value = feriaItem.solicitacao;
+                document.getElementById('feriasInicio').value = feriaItem.inicio;
+                document.getElementById('feriasDias').value = feriaItem.dias;
+                calculateFeriasEnd();
+            } else {
+                document.getElementById('feriasModalTitle').textContent = 'Nova Solicitação de Férias';
+                document.getElementById('feriasForm').reset();
+                document.getElementById('feriasId').value = '';
+                document.getElementById('feriasSolicitacao').valueAsDate = new Date();
+                document.getElementById('feriasFuncSearch').value = '';
+                document.getElementById('feriasFunc').value = '';
+            }
+            document.getElementById('feriasModal').classList.remove('hidden');
+        }
+
+        function closeFeriasModal() {
+            document.getElementById('feriasModal').classList.add('hidden');
+        }
+
+        function updateFeriasSelect() {
+            // Função mantida para compatibilidade, mas agora usa pesquisa
+        }
+
+        function searchFuncionarios() {
+            const search = document.getElementById('feriasFuncSearch').value.toLowerCase();
+            const list = document.getElementById('funcionariosList');
+            
+            if (search.length < 2) {
+                list.classList.add('hidden');
+                return;
+            }
+
+            const filtered = funcionarios.filter(f => 
+                f.nome.toLowerCase().includes(search)
+            ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+            if (filtered.length === 0) {
+                list.classList.add('hidden');
+                return;
+            }
+
+            list.innerHTML = '';
+            filtered.forEach(funcionario => {
+                const item = document.createElement('div');
+                item.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer border-b';
+                item.textContent = `${funcionario.nome} - ${funcionario.cargo}`;
+                item.onclick = () => selectFuncionario(funcionario);
+                list.appendChild(item);
+            });
+
+            list.classList.remove('hidden');
+        }
+
+        function showFuncionariosList() {
+            if (funcionarios.length > 0) {
+                searchFuncionarios();
+            }
+        }
+
+        function selectFuncionario(funcionario) {
+            document.getElementById('feriasFuncSearch').value = funcionario.nome;
+            document.getElementById('feriasFunc').value = funcionario.id;
+            document.getElementById('funcionariosList').classList.add('hidden');
+        }
+
+        function calculateFeriasEnd() {
+            const inicio = document.getElementById('feriasInicio').value;
+            const dias = parseInt(document.getElementById('feriasDias').value);
+            
+            if (inicio && dias) {
+                const dataInicio = new Date(inicio);
+                const dataFim = new Date(dataInicio);
+                dataFim.setDate(dataFim.getDate() + dias - 1);
+                
+                const dataRetorno = new Date(dataFim);
+                dataRetorno.setDate(dataRetorno.getDate() + 1);
+                
+                document.getElementById('feriasFim').value = dataFim.toISOString().split('T')[0];
+                document.getElementById('feriasRetorno').value = dataRetorno.toISOString().split('T')[0];
+            }
+        }
+
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6; // Domingo ou Sábado
+        }
+
+        function isFeriado(dateString) {
+            return feriados.includes(dateString);
+        }
+
+        function getNextWorkDay(date) {
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            
+            while (isWeekend(nextDay) || isFeriado(nextDay.toISOString().split('T')[0])) {
+                nextDay.setDate(nextDay.getDate() + 1);
+            }
+            
+            return nextDay;
+        }
+
+        function getDateViolation(date, dateString) {
+            const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            const dayName = dayNames[date.getDay()];
+            const formattedDate = date.toLocaleDateString('pt-BR');
+            
+            // Verificar se é fim de semana
+            if (isWeekend(date)) {
+                return `Data ${formattedDate} (${dayName}) é fim de semana.`;
+            }
+            
+            // Verificar se é feriado e qual feriado
+            if (isFeriado(dateString)) {
+                const feriadoInfo = getFeriadoInfo(dateString);
+                return `Data ${formattedDate} (${dayName}) é feriado: ${feriadoInfo}.`;
+            }
+            
+            return null;
+        }
+
+        function getFeriadoInfo(dateString) {
+            const feriadosInfo = {
+                // 2020 - Nacionais
+                '2020-01-01': 'Confraternização Universal (Nacional)',
+                '2020-04-21': 'Tiradentes (Nacional)',
+                '2020-05-01': 'Dia do Trabalhador (Nacional)',
+                '2020-09-07': 'Independência do Brasil (Nacional)',
+                '2020-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2020-11-02': 'Finados (Nacional)',
+                '2020-11-15': 'Proclamação da República (Nacional)',
+                '2020-12-25': 'Natal (Nacional)',
+                
+                // 2021 - Nacionais
+                '2021-01-01': 'Confraternização Universal (Nacional)',
+                '2021-04-21': 'Tiradentes (Nacional)',
+                '2021-05-01': 'Dia do Trabalhador (Nacional)',
+                '2021-09-07': 'Independência do Brasil (Nacional)',
+                '2021-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2021-11-02': 'Finados (Nacional)',
+                '2021-11-15': 'Proclamação da República (Nacional)',
+                '2021-12-25': 'Natal (Nacional)',
+                
+                // 2022 - Nacionais
+                '2022-01-01': 'Confraternização Universal (Nacional)',
+                '2022-04-21': 'Tiradentes (Nacional)',
+                '2022-05-01': 'Dia do Trabalhador (Nacional)',
+                '2022-09-07': 'Independência do Brasil (Nacional)',
+                '2022-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2022-11-02': 'Finados (Nacional)',
+                '2022-11-15': 'Proclamação da República (Nacional)',
+                '2022-12-25': 'Natal (Nacional)',
+                
+                // 2023 - Nacionais
+                '2023-01-01': 'Confraternização Universal (Nacional)',
+                '2023-04-21': 'Tiradentes (Nacional)',
+                '2023-05-01': 'Dia do Trabalhador (Nacional)',
+                '2023-09-07': 'Independência do Brasil (Nacional)',
+                '2023-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2023-11-02': 'Finados (Nacional)',
+                '2023-11-15': 'Proclamação da República (Nacional)',
+                '2023-12-25': 'Natal (Nacional)',
+                
+                // 2024 - Nacionais
+                '2024-01-01': 'Confraternização Universal (Nacional)',
+                '2024-02-12': 'Carnaval (Nacional)',
+                '2024-02-13': 'Carnaval (Nacional)',
+                '2024-03-29': 'Sexta-feira Santa (Nacional)',
+                '2024-04-21': 'Tiradentes (Nacional)',
+                '2024-05-01': 'Dia do Trabalhador (Nacional)',
+                '2024-09-07': 'Independência do Brasil (Nacional)',
+                '2024-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2024-11-02': 'Finados (Nacional)',
+                '2024-11-15': 'Proclamação da República (Nacional)',
+                '2024-12-25': 'Natal (Nacional)',
+                // 2024 - Amazonas
+                '2024-09-05': 'Elevação do Amazonas à categoria de província (Estadual - AM)',
+                '2024-11-20': 'Consciência Negra (Estadual - AM)',
+                // 2024 - Manaus
+                '2024-10-24': 'Dia de Nossa Senhora dos Remédios (Municipal - Manaus)',
+                
+                // 2025 - Nacionais
+                '2025-01-01': 'Confraternização Universal (Nacional)',
+                '2025-03-03': 'Carnaval (Nacional)',
+                '2025-03-04': 'Carnaval (Nacional)',
+                '2025-04-18': 'Sexta-feira Santa (Nacional)',
+                '2025-04-21': 'Tiradentes (Nacional)',
+                '2025-05-01': 'Dia do Trabalhador (Nacional)',
+                '2025-09-07': 'Independência do Brasil (Nacional)',
+                '2025-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2025-11-02': 'Finados (Nacional)',
+                '2025-11-15': 'Proclamação da República (Nacional)',
+                '2025-12-25': 'Natal (Nacional)',
+                // 2025 - Amazonas
+                '2025-09-05': 'Elevação do Amazonas à categoria de província (Estadual - AM)',
+                '2025-11-20': 'Consciência Negra (Estadual - AM)',
+                // 2025 - Manaus
+                '2025-10-24': 'Dia de Nossa Senhora dos Remédios (Municipal - Manaus)',
+                
+                // 2026 - Nacionais
+                '2026-01-01': 'Confraternização Universal (Nacional)',
+                '2026-04-21': 'Tiradentes (Nacional)',
+                '2026-05-01': 'Dia do Trabalhador (Nacional)',
+                '2026-09-07': 'Independência do Brasil (Nacional)',
+                '2026-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2026-11-02': 'Finados (Nacional)',
+                '2026-11-15': 'Proclamação da República (Nacional)',
+                '2026-12-25': 'Natal (Nacional)',
+                
+                // 2027 - Nacionais
+                '2027-01-01': 'Confraternização Universal (Nacional)',
+                '2027-04-21': 'Tiradentes (Nacional)',
+                '2027-05-01': 'Dia do Trabalhador (Nacional)',
+                '2027-09-07': 'Independência do Brasil (Nacional)',
+                '2027-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2027-11-02': 'Finados (Nacional)',
+                '2027-11-15': 'Proclamação da República (Nacional)',
+                '2027-12-25': 'Natal (Nacional)',
+                
+                // 2028 - Nacionais
+                '2028-01-01': 'Confraternização Universal (Nacional)',
+                '2028-04-21': 'Tiradentes (Nacional)',
+                '2028-05-01': 'Dia do Trabalhador (Nacional)',
+                '2028-09-07': 'Independência do Brasil (Nacional)',
+                '2028-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2028-11-02': 'Finados (Nacional)',
+                '2028-11-15': 'Proclamação da República (Nacional)',
+                '2028-12-25': 'Natal (Nacional)',
+                
+                // 2029 - Nacionais
+                '2029-01-01': 'Confraternização Universal (Nacional)',
+                '2029-04-21': 'Tiradentes (Nacional)',
+                '2029-05-01': 'Dia do Trabalhador (Nacional)',
+                '2029-09-07': 'Independência do Brasil (Nacional)',
+                '2029-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2029-11-02': 'Finados (Nacional)',
+                '2029-11-15': 'Proclamação da República (Nacional)',
+                '2029-12-25': 'Natal (Nacional)',
+                
+                // 2030 - Nacionais
+                '2030-01-01': 'Confraternização Universal (Nacional)',
+                '2030-04-21': 'Tiradentes (Nacional)',
+                '2030-05-01': 'Dia do Trabalhador (Nacional)',
+                '2030-09-07': 'Independência do Brasil (Nacional)',
+                '2030-10-12': 'Nossa Senhora Aparecida (Nacional)',
+                '2030-11-02': 'Finados (Nacional)',
+                '2030-11-15': 'Proclamação da República (Nacional)',
+                '2030-12-25': 'Natal (Nacional)'
+            };
+            
+            return feriadosInfo[dateString] || 'Feriado';
+        }
+
+        function handleSaveFerias(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('feriasId').value;
+            const funcionarioId = parseInt(document.getElementById('feriasFunc').value);
+            const solicitacao = document.getElementById('feriasSolicitacao').value;
+            const inicio = document.getElementById('feriasInicio').value;
+            const dias = parseInt(document.getElementById('feriasDias').value);
+            
+            // Validações
+            const funcionario = funcionarios.find(f => f.id === funcionarioId);
+            if (!funcionario) {
+                showToast('Funcionário não encontrado!', 'error');
+                return;
+            }
+
+            const dataInicio = new Date(inicio);
+            const anoAtual = new Date().getFullYear();
+            
+            // Verificar limite de 30 dias por ano (BLOQUEIO TOTAL)
+            const feriasAno = ferias.filter(f => 
+                f.funcionarioId === funcionarioId && 
+                new Date(f.inicio).getFullYear() === anoAtual &&
+                (!id || f.id != id)
+            );
+            
+            const diasUsados = feriasAno.reduce((total, f) => total + f.dias, 0);
+            
+            if (diasUsados >= 30) {
+                showToast(`Funcionário já utilizou ${diasUsados} dias de férias no ano. Não é possível solicitar mais férias.`, 'error');
+                return;
+            }
+            
+            if (diasUsados + dias > 30) {
+                showToast(`Funcionário já utilizou ${diasUsados} dias de férias no ano. Só pode solicitar mais ${30 - diasUsados} dias.`, 'error');
+                return;
+            }
+
+            let violations = [];
+            
+            // Verificar se não é fim de semana ou feriado no INÍCIO das férias
+            const violacaoInicio = getDateViolation(dataInicio, inicio);
+            if (violacaoInicio) {
+                violations.push(`<strong>INÍCIO DAS FÉRIAS:</strong> ${violacaoInicio}`);
+            }
+
+            // Calcular data de retorno e verificar violações
+            const dataFim = new Date(dataInicio);
+            dataFim.setDate(dataFim.getDate() + dias - 1);
+            
+            let dataRetorno = new Date(dataFim);
+            dataRetorno.setDate(dataRetorno.getDate() + 1);
+            const dataRetornoStr = dataRetorno.toISOString().split('T')[0];
+            
+            // Para todos os funcionários, verificar se o retorno cai em fim de semana ou feriado
+            const violacaoRetorno = getDateViolation(dataRetorno, dataRetornoStr);
+            if (violacaoRetorno) {
+                if (funcionario.turno === 'Diarista') {
+                    violations.push(`<strong>RETORNO DE FÉRIAS (Diarista):</strong> ${violacaoRetorno} Funcionários diaristas devem retornar em dias úteis.`);
+                } else {
+                    violations.push(`<strong>RETORNO DE FÉRIAS:</strong> ${violacaoRetorno} Recomenda-se que o retorno seja em dia útil.`);
+                }
+            }
+
+            // Se há violações, mostrar modal de confirmação
+            if (violations.length > 0) {
+                showRuleViolation(violations, () => {
+                    saveFeriasData(id, funcionarioId, funcionario, solicitacao, inicio, dias);
+                });
+                return;
+            }
+
+            // Se não há violações, salvar normalmente
+            saveFeriasData(id, funcionarioId, funcionario, solicitacao, inicio, dias);
+        }
+
+        function saveFeriasData(id, funcionarioId, funcionario, solicitacao, inicio, dias) {
+            const dataInicio = new Date(inicio);
+            const dataFim = new Date(dataInicio);
+            dataFim.setDate(dataFim.getDate() + dias - 1);
+            
+            let dataRetorno = new Date(dataFim);
+            dataRetorno.setDate(dataRetorno.getDate() + 1);
+            
+            // Para diaristas, retorno deve ser no próximo dia útil
+            if (funcionario.turno === 'Diarista') {
+                dataRetorno = getNextWorkDay(dataFim);
+            }
+
+            const feriasData = {
+                funcionarioId,
+                funcionarioNome: funcionario.nome,
+                solicitacao,
+                inicio,
+                fim: dataFim.toISOString().split('T')[0],
+                retorno: dataRetorno.toISOString().split('T')[0],
+                dias,
+                status: 'Aprovada'
+            };
+
+            if (id) {
+                // Editar férias existente
+                const index = ferias.findIndex(f => f.id == id);
+                ferias[index] = { ...ferias[index], ...feriasData };
+                showToast('Férias atualizadas com sucesso!');
+            } else {
+                // Novas férias
+                const newId = ferias.length > 0 ? Math.max(...ferias.map(f => f.id)) + 1 : 1;
+                feriasData.id = newId;
+                ferias.push(feriasData);
+                showToast('Solicitação de férias salva com sucesso!');
+            }
+
+            saveData(); // Salvar dados após modificação
+            loadFerias();
+            closeFeriasModal();
+        }
+
+        function loadFerias() {
+            const tbody = document.getElementById('feriasTable');
+            tbody.innerHTML = '';
+
+            // Ordenar férias por nome do funcionário em ordem alfabética
+            const feriasOrdenadas = [...ferias].sort((a, b) => 
+                a.funcionarioNome.localeCompare(b.funcionarioNome, 'pt-BR', { sensitivity: 'base' })
+            );
+
+            feriasOrdenadas.forEach(feriaItem => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${feriaItem.funcionarioNome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${formatDateBR(feriaItem.inicio)} a ${formatDateBR(feriaItem.fim)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${feriaItem.dias} dias</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            ${feriaItem.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="openFeriasModal(${JSON.stringify(feriaItem).replace(/"/g, '&quot;')})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                        <button onclick="deleteFerias(${feriaItem.id})" class="text-red-600 hover:text-red-900">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Atualizar total na tabela
+            document.getElementById('totalFeriasTabela').textContent = ferias.length;
+        }
+
+        function filterFerias() {
+            const search = document.getElementById('searchFerias').value.toLowerCase();
+            const rows = document.querySelectorAll('#feriasTable tr');
+            
+            rows.forEach(row => {
+                const nome = row.cells[0].textContent.toLowerCase();
+                row.style.display = nome.includes(search) ? '' : 'none';
+            });
+        }
+
+        function deleteFerias(id) {
+            showConfirm('Tem certeza que deseja excluir esta solicitação de férias?', () => {
+                ferias = ferias.filter(f => f.id !== id);
+                saveData(); // Salvar dados após exclusão
+                loadFerias();
+                showToast('Solicitação de férias excluída com sucesso!');
+            });
+        }
+
+        // Relatórios
+        function generateReportSemFerias() {
+            const ano = document.getElementById('relatorioAno').value;
+            if (!ano) {
+                showToast('Selecione um ano para gerar o relatório!', 'error');
+                return;
+            }
+
+            // Funcionários que não solicitaram férias no ano
+            const funcionariosSemFerias = funcionarios.filter(func => {
+                const feriasDoFunc = ferias.filter(f => 
+                    f.funcionarioId === func.id && 
+                    new Date(f.inicio).getFullYear() == ano
+                );
+                return feriasDoFunc.length === 0;
+            }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+            // Funcionários com férias parciais (menos de 30 dias)
+            const funcionariosFeriasParciais = funcionarios.filter(func => {
+                const feriasDoFunc = ferias.filter(f => 
+                    f.funcionarioId === func.id && 
+                    new Date(f.inicio).getFullYear() == ano
+                );
+                const diasUsados = feriasDoFunc.reduce((total, f) => total + f.dias, 0);
+                return feriasDoFunc.length > 0 && diasUsados < 30;
+            }).map(func => {
+                const feriasDoFunc = ferias.filter(f => 
+                    f.funcionarioId === func.id && 
+                    new Date(f.inicio).getFullYear() == ano
+                );
+                const diasUsados = feriasDoFunc.reduce((total, f) => total + f.dias, 0);
+                return { ...func, diasUsados, diasRestantes: 30 - diasUsados };
+            }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+            const enfermeiros = funcionariosSemFerias.filter(f => f.cargo === 'Enfermeiro(a)');
+            const tecnicos = funcionariosSemFerias.filter(f => f.cargo === 'Técnico de Enfermagem');
+            const biomedicos = funcionariosSemFerias.filter(f => f.cargo === 'Biomédico(a)');
+            
+            const enfermeirosParciais = funcionariosFeriasParciais.filter(f => f.cargo === 'Enfermeiro(a)');
+            const tecnicosParciais = funcionariosFeriasParciais.filter(f => f.cargo === 'Técnico de Enfermagem');
+            const biomedicosParciais = funcionariosFeriasParciais.filter(f => f.cargo === 'Biomédico(a)');
+
+            const relatorioHtml = `
+                <div class="space-y-6">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">RELATÓRIO DE FUNCIONÁRIOS SEM FÉRIAS - ${ano}</h3>
+                        <p class="text-gray-600">Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+
+                    ${funcionariosSemFerias.length > 0 ? `
+                    <div>
+                        <h4 class="text-lg font-semibold text-red-600 mb-3">FUNCIONÁRIOS QUE NÃO SOLICITARAM FÉRIAS</h4>
+                        
+                        ${enfermeiros.length > 0 ? `
+                        <div class="mb-4">
+                            <h5 class="text-md font-medium text-gray-800 mb-2">Enfermeiros</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-red-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Contato</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Disponíveis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${enfermeiros.map(f => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900 border">${f.nome}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.turno}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.contato || 'Não informado'}</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-red-600 border">30 dias</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${tecnicos.length > 0 ? `
+                        <div class="mb-4">
+                            <h5 class="text-md font-medium text-gray-800 mb-2">Técnicos de Enfermagem</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-red-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Contato</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Disponíveis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${tecnicos.map(f => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900 border">${f.nome}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.turno}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.contato || 'Não informado'}</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-red-600 border">30 dias</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${biomedicos.length > 0 ? `
+                        <div class="mb-4">
+                            <h5 class="text-md font-medium text-gray-800 mb-2">Biomédicos</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-red-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Contato</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Disponíveis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${biomedicos.map(f => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900 border">${f.nome}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.turno}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.contato || 'Não informado'}</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-red-600 border">30 dias</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+
+                    ${funcionariosFeriasParciais.length > 0 ? `
+                    <div>
+                        <h4 class="text-lg font-semibold text-yellow-600 mb-3">FUNCIONÁRIOS COM FÉRIAS PARCIAIS</h4>
+                        
+                        ${enfermeirosParciais.length > 0 ? `
+                        <div class="mb-4">
+                            <h5 class="text-md font-medium text-gray-800 mb-2">Enfermeiros</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-yellow-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Usados</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Restantes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${enfermeirosParciais.map(f => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900 border">${f.nome}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.turno}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.diasUsados} dias</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-yellow-600 border">${f.diasRestantes} dias</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${tecnicosParciais.length > 0 ? `
+                        <div class="mb-4">
+                            <h5 class="text-md font-medium text-gray-800 mb-2">Técnicos de Enfermagem</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-yellow-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Usados</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Restantes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${tecnicosParciais.map(f => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900 border">${f.nome}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.turno}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.diasUsados} dias</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-yellow-600 border">${f.diasRestantes} dias</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        ${biomedicosParciais.length > 0 ? `
+                        <div class="mb-4">
+                            <h5 class="text-md font-medium text-gray-800 mb-2">Biomédicos</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 border">
+                                    <thead class="bg-yellow-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Usados</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias Restantes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${biomedicosParciais.map(f => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-gray-900 border">${f.nome}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.turno}</td>
+                                                <td class="px-4 py-2 text-sm text-gray-500 border">${f.diasUsados} dias</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-yellow-600 border">${f.diasRestantes} dias</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+
+                    ${funcionariosSemFerias.length === 0 && funcionariosFeriasParciais.length === 0 ? `
+                    <div class="text-center p-8 bg-green-50 rounded-lg">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-lg font-semibold text-green-800 mb-2">Excelente!</h4>
+                        <p class="text-green-600">Todos os funcionários já solicitaram suas férias completas em ${ano}.</p>
+                    </div>
+                    ` : ''}
+
+                    <div class="text-center text-sm text-gray-600 border-t pt-4 font-medium">
+                        <p>RESUMO: ${funcionariosSemFerias.length} funcionário(s) sem férias | ${funcionariosFeriasParciais.length} funcionário(s) com férias parciais</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('relatorioData').innerHTML = relatorioHtml;
+            document.getElementById('relatorioContent').classList.remove('hidden');
+        }
+
+        function generateReport() {
+            const mesAno = document.getElementById('relatorioMes').value;
+            if (!mesAno) {
+                showToast('Selecione um mês para gerar o relatório!', 'error');
+                return;
+            }
+
+            const [ano, mes] = mesAno.split('-');
+            // Filtrar apenas funcionários que INICIAM as férias no mês selecionado
+            const feriasDoMes = ferias.filter(f => {
+                const dataInicio = new Date(f.inicio);
+                return dataInicio.getFullYear() == ano && (dataInicio.getMonth() + 1) == mes;
+            });
+
+            const funcionariosComFerias = feriasDoMes.map(f => {
+                const func = funcionarios.find(fn => fn.id === f.funcionarioId);
+                return { ...f, funcionario: func };
+            }).sort((a, b) => a.funcionarioNome.localeCompare(b.funcionarioNome, 'pt-BR', { sensitivity: 'base' }));
+
+            const enfermeiros = funcionariosComFerias.filter(f => f.funcionario.cargo === 'Enfermeiro(a)');
+            const tecnicos = funcionariosComFerias.filter(f => f.funcionario.cargo === 'Técnico de Enfermagem');
+            const biomedicos = funcionariosComFerias.filter(f => f.funcionario.cargo === 'Biomédico(a)');
+
+            const relatorioHtml = `
+                <div class="space-y-6">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Relatório de Saídas para Férias - ${new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</h3>
+                        <p class="text-gray-600">Funcionários que iniciam férias no período | Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+
+                    ${enfermeiros.length > 0 ? `
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-3">ENFERMEIROS</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 border">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Período</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Retorno</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${enfermeiros.map(f => `
+                                        <tr>
+                                            <td class="px-4 py-2 text-sm text-gray-900 border">${f.funcionarioNome}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.funcionario.turno}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${formatDateBR(f.inicio)} a ${formatDateBR(f.fim)}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${formatDateBR(f.retorno)}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.dias}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-2 text-sm font-medium text-gray-700 border">
+                                            Total de Enfermeiros: ${enfermeiros.length}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${tecnicos.length > 0 ? `
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-3">TÉCNICOS DE ENFERMAGEM</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 border">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Período</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Retorno</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${tecnicos.map(f => `
+                                        <tr>
+                                            <td class="px-4 py-2 text-sm text-gray-900 border">${f.funcionarioNome}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.funcionario.turno}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${formatDateBR(f.inicio)} a ${formatDateBR(f.fim)}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${formatDateBR(f.retorno)}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.dias}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-2 text-sm font-medium text-gray-700 border">
+                                            Total de Técnicos: ${tecnicos.length}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${biomedicos.length > 0 ? `
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-3">BIOMÉDICOS</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 border">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Nome</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Turno</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Período</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Retorno</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Dias</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase border">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${biomedicos.map(f => `
+                                        <tr>
+                                            <td class="px-4 py-2 text-sm text-gray-900 border">${f.funcionarioNome}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.funcionario.turno}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${formatDateBR(f.inicio)} a ${formatDateBR(f.fim)}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${formatDateBR(f.retorno)}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.dias}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500 border">${f.status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="7" class="px-4 py-2 text-sm font-medium text-gray-700 border">
+                                            Total de Biomédicos: ${biomedicos.length}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="text-center text-sm text-gray-600 border-t pt-4 font-medium">
+                        <p>TOTAL GERAL: ${funcionariosComFerias.length} funcionário(s) saindo de férias no período</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('relatorioData').innerHTML = relatorioHtml;
+            document.getElementById('relatorioContent').classList.remove('hidden');
+        }
+
+        function printReport() {
+            const relatorioContent = document.getElementById('relatorioData').innerHTML;
+            
+            if (!relatorioContent) {
+                showToast('Gere um relatório primeiro!', 'error');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Relatório - Sistema de Férias</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 20px; 
+                            line-height: 1.4;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 20px; 
+                            font-size: 12px;
+                        }
+                        th, td { 
+                            border: 1px solid #333; 
+                            padding: 6px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background-color: #f0f0f0; 
+                            font-weight: bold;
+                        }
+                        h3 { 
+                            color: #333; 
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        h4 { 
+                            color: #333; 
+                            margin-top: 25px;
+                            margin-bottom: 10px;
+                        }
+                        h5 { 
+                            color: #666; 
+                            margin-top: 15px;
+                            margin-bottom: 8px;
+                        }
+                        .text-center { text-align: center; }
+                        .mb-6 { margin-bottom: 24px; }
+                        .mb-3 { margin-bottom: 12px; }
+                        .mb-4 { margin-bottom: 16px; }
+                        .mb-2 { margin-bottom: 8px; }
+                        .space-y-6 > * + * { margin-top: 24px; }
+                        .border-t { 
+                            border-top: 2px solid #333; 
+                            margin-top: 20px;
+                        }
+                        .pt-4 { padding-top: 16px; }
+                        .bg-green-50 {
+                            background-color: #f0f9ff;
+                            padding: 20px;
+                            border: 1px solid #ccc;
+                            border-radius: 8px;
+                            text-align: center;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${relatorioContent}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+            }, 500);
+            
+            showToast('Abrindo janela de impressão...');
+        }
+
+        function savePDF() {
+            printReport(); // Usar a mesma função de impressão
+        }
+
+        // Gerenciamento de Usuários
+        function openUsuarioModal(usuario = null) {
+            if (usuario) {
+                document.getElementById('usuarioModalTitle').textContent = 'Editar Usuário';
+                document.getElementById('usuarioId').value = usuario.id;
+                document.getElementById('usuarioNome').value = usuario.username;
+                document.getElementById('usuarioSenha').value = '';
+            } else {
+                document.getElementById('usuarioModalTitle').textContent = 'Novo Usuário';
+                document.getElementById('usuarioForm').reset();
+                document.getElementById('usuarioId').value = '';
+            }
+            document.getElementById('usuarioModal').classList.remove('hidden');
+        }
+
+        function closeUsuarioModal() {
+            document.getElementById('usuarioModal').classList.add('hidden');
+        }
+
+        function handleSaveUsuario(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('usuarioId').value;
+            const username = document.getElementById('usuarioNome').value;
+            const password = document.getElementById('usuarioSenha').value;
+
+            if (id) {
+                // Editar usuário existente
+                const index = usuarios.findIndex(u => u.id == id);
+                usuarios[index] = { ...usuarios[index], username };
+                if (password) {
+                    usuarios[index].password = password;
+                }
+                showToast('Usuário atualizado com sucesso!');
+            } else {
+                // Novo usuário
+                const newId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
+                const newUsuario = {
+                    id: newId,
+                    username,
+                    password,
+                    firstLogin: true,
+                    lastAccess: null
+                };
+                
+                usuarios.push(newUsuario);
+                showToast('Usuário criado com sucesso!');
+            }
+
+            saveData(); // Salvar dados após modificação
+            loadUsuarios();
+            closeUsuarioModal();
+        }
+
+        function loadUsuarios() {
+            const tbody = document.getElementById('usuariosTable');
+            tbody.innerHTML = '';
+
+            usuarios.forEach(usuario => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${usuario.username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${usuario.lastAccess ? new Date(usuario.lastAccess).toLocaleDateString('pt-BR') : 'Nunca'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="openUsuarioModal(${JSON.stringify(usuario).replace(/"/g, '&quot;')})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                        ${usuario.username !== 'admin' ? `<button onclick="deleteUsuario(${usuario.id})" class="text-red-600 hover:text-red-900">Excluir</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function deleteUsuario(id) {
+            showConfirm('Tem certeza que deseja excluir este usuário?', () => {
+                usuarios = usuarios.filter(u => u.id !== id);
+                saveData(); // Salvar dados após exclusão
+                loadUsuarios();
+                showToast('Usuário excluído com sucesso!');
+            });
+        }
+
+        // Utilitários
+        function formatDateBR(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            // Definir cor baseada no tipo
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50`;
+            
+            if (type === 'error') {
+                toast.classList.add('bg-red-500', 'text-white');
+            } else if (type === 'info') {
+                toast.classList.add('bg-blue-500', 'text-white');
+            } else {
+                toast.classList.add('bg-green-500', 'text-white');
+            }
+            
+            // Mostrar toast
+            toast.classList.remove('translate-x-full');
+            
+            // Esconder após 3 segundos
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        function showConfirm(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmModal').classList.remove('hidden');
+            
+            document.getElementById('confirmOk').onclick = () => {
+                callback();
+                closeConfirmModal();
+            };
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        }
+
+        function showRuleViolation(violations, callback) {
+            const message = violations.map(v => `• ${v}`).join('<br>');
+            document.getElementById('ruleViolationMessage').innerHTML = message;
+            document.getElementById('ruleViolationModal').classList.remove('hidden');
+            
+            document.getElementById('ruleViolationContinue').onclick = () => {
+                callback();
+                closeRuleViolationModal();
+            };
+        }
+
+        function closeRuleViolationModal() {
+            document.getElementById('ruleViolationModal').classList.add('hidden');
+        }
+
+        // Configurações do Sistema
+        function handleSaveConfig(e) {
+            e.preventDefault();
+            
+            configuracoes.nomeUnidade = document.getElementById('nomeUnidade').value;
+            configuracoes.logoUrl = document.getElementById('logoUrl').value;
+            configuracoes.descricaoUnidade = document.getElementById('descricaoUnidade').value;
+            
+            saveData(); // Salvar dados após modificação
+            updateSystemInfo();
+            showToast('Configurações salvas com sucesso!');
+        }
+
+        function loadConfiguracoes() {
+            document.getElementById('nomeUnidade').value = configuracoes.nomeUnidade;
+            document.getElementById('logoUrl').value = configuracoes.logoUrl;
+            document.getElementById('descricaoUnidade').value = configuracoes.descricaoUnidade;
+        }
+
+        function updateSystemInfo() {
+            // Atualizar informações na tela de login
+            const loginTitle = document.querySelector('#loginScreen h1');
+            const loginSubtitle = document.querySelector('#loginScreen p');
+            const loginDescription = document.querySelector('#loginScreen p:last-of-type');
+            
+            if (loginTitle) loginTitle.textContent = 'Sistema de Férias';
+            if (loginSubtitle) loginSubtitle.textContent = configuracoes.nomeUnidade;
+            if (loginDescription) loginDescription.textContent = configuracoes.descricaoUnidade;
+            
+            // Atualizar logo se fornecida
+            const logoImg = document.querySelector('#loginScreen img');
+            if (logoImg && configuracoes.logoUrl) {
+                logoImg.src = configuracoes.logoUrl;
+            }
+        }
+
+        function makeBackup() {
+            const backupData = {
+                funcionarios,
+                ferias,
+                usuarios,
+                configuracoes,
+                timestamp: new Date().toISOString(),
+                version: 1
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `backup-sistema-ferias-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showToast('Backup criado com sucesso!');
+        }
+
+        function restoreBackup(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const backupData = JSON.parse(event.target.result);
+                    
+                    // Importar dados
+                    if (backupData.funcionarios) funcionarios = backupData.funcionarios;
+                    if (backupData.ferias) ferias = backupData.ferias;
+                    if (backupData.usuarios) usuarios = backupData.usuarios;
+                    if (backupData.configuracoes) configuracoes = backupData.configuracoes;
+                    
+                    saveData(); // Salvar dados após restaurar
+                    
+                    // Recarregar interface
+                    loadFuncionarios();
+                    loadFerias();
+                    loadUsuarios();
+                    loadConfiguracoes();
+                    updateSystemInfo();
+                    updateDashboard();
+                    
+                    showToast('Backup restaurado com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao restaurar backup:', error);
+                    showToast('Erro ao restaurar backup. Arquivo inválido.', 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Limpar input
+            e.target.value = '';
+        }
+
+        function clearData() {
+            showConfirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.', () => {
+                funcionarios = [];
+                ferias = [];
+                
+                saveData(); // Salvar dados após limpeza
+                loadFuncionarios();
+                loadFerias();
+                updateDashboard();
+                
+                showToast('Dados limpos com sucesso!');
+            });
+        }
+
+        // Sistema de Persistência de Dados
+        function saveData() {
+            try {
+                const data = {
+                    funcionarios,
+                    ferias,
+                    usuarios,
+                    configuracoes,
+                    lastSaved: new Date().toISOString()
+                };
+                localStorage.setItem('sistemaFerias', JSON.stringify(data));
+                console.log('Dados salvos automaticamente');
+            } catch (error) {
+                console.error('Erro ao salvar dados:', error);
+            }
+        }
+
+        function loadData() {
+            try {
+                const savedData = localStorage.getItem('sistemaFerias');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    if (data.funcionarios) funcionarios = data.funcionarios;
+                    if (data.ferias) ferias = data.ferias;
+                    if (data.usuarios) usuarios = data.usuarios;
+                    if (data.configuracoes) configuracoes = data.configuracoes;
+                    
+                    console.log('Dados carregados do armazenamento local');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+            return false;
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9940f5e15597e2ae',t:'MTc2MTM4NzQwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
