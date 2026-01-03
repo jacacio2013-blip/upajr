@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UPA José Rodrigues - Gestão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+      /* Estilos para tela normal */
+      body {
+        background-color: #f8fafc;
+      }
+
+      /* Estilos de Impressão Corrigidos */
+      @media print {
+        /* Reset total de margens e fundo */
+        @page {
+          margin: 0;
+          size: auto;
+        }
+
+        html, body {
+          background: white !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+
+        /* Oculta UI desnecessária e elementos que podem bloquear a visualização */
+        header, nav, aside, footer, button, .no-print, .print-hidden, 
+        .toast-container, .notification-bell, .sidebar, .mobile-header {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        /* Força o root a não clipping */
+        #root {
+          display: block !important;
+          visibility: hidden !important;
+          overflow: visible !important;
+        }
+
+        /* Torna os modais relativos para evitar clipping de altura fixa */
+        .fixed.inset-0 {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          background: white !important;
+          box-shadow: none !important;
+          z-index: auto !important;
+          overflow: visible !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        .fixed.inset-0 > div {
+          max-height: none !important;
+          overflow: visible !important;
+          border-radius: 0 !important;
+        }
+
+        /* Torna visível apenas os containers de documento designados e seus descendentes */
+        #document-preview-area, #document-preview-area *,
+        #admin-document-preview, #admin-document-preview *,
+        #report-doc-preview, #report-doc-preview *,
+        .print-content, .print-content * {
+          visibility: visible !important;
+        }
+
+        /* Posiciona o conteúdo de impressão no topo absoluto da página física */
+        #document-preview-area, #admin-document-preview, #report-doc-preview, .print-content {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          display: block !important;
+          margin: 0 !important;
+          padding: 1.5cm !important;
+          box-sizing: border-box !important;
+        }
+
+        /* Garante que imagens (como logomarcas) sejam impressas */
+        img {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+      }
+    </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="./assets/index-CBL1yLga.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CIZPKGUL.css">
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
